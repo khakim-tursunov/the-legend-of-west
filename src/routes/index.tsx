@@ -71,7 +71,9 @@ function Game() {
   const idRef = useRef(1);
   const arenaRef = useRef<HTMLDivElement>(null);
   const timersRef = useRef<{ tick?: number; spawn?: number; cull?: number }>({});
-  const audioRef = useRef<{ ctx?: AudioContext; gain?: GainNode; stop?: () => void }>({});
+  const musicRef = useRef<HTMLAudioElement | null>(null);
+  const gunshotPoolRef = useRef<HTMLAudioElement[]>([]);
+  const gunshotIdxRef = useRef(0);
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? window.localStorage.getItem("wws_high") : null;
