@@ -63,6 +63,7 @@ function Game() {
   const [shots, setShots] = useState(0);
   const [shake, setShake] = useState(0);
   const [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   const lastHitRef = useRef(0);
   const idRef = useRef(1);
