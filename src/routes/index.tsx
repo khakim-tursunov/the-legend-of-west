@@ -63,6 +63,7 @@ function Game() {
   const [shots, setShots] = useState(0);
   const [shake, setShake] = useState(0);
   const [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   const lastHitRef = useRef(0);
   const idRef = useRef(1);
@@ -97,19 +98,7 @@ function Game() {
     });
   }, []);
 
-  const startGame = () => {
-    clearTimers();
-    setScore(0);
-    setTimeLeft(GAME_DURATION);
-    setTargets([]);
-    setParticles([]);
-    setCombo(0);
-    setHits(0);
-    setShots(0);
-    setPhase("playing");
-    lastHitRef.current = 0;
-    startMusic();
-
+  const runTimers = () => {
     timersRef.current.tick = window.setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
@@ -142,6 +131,37 @@ function Game() {
       const now = Date.now();
       setTargets((cur) => cur.filter((t) => now - t.born < t.ttl));
     }, 100);
+  };
+
+  const startGame = () => {
+    clearTimers();
+    setScore(0);
+    setTimeLeft(GAME_DURATION);
+    setTargets([]);
+    setParticles([]);
+    setCombo(0);
+    setHits(0);
+    setShots(0);
+    setPaused(false);
+    setPhase("playing");
+    lastHitRef.current = 0;
+    startMusic();
+    runTimers();
+  };
+
+  const pauseGame = () => {
+    if (phase !== "playing" || paused) return;
+    setPaused(true);
+    clearTimers();
+    if (audioRef.current.gain) audioRef.current.gain.gain.value = 0;
+  };
+
+  const resumeGame = () => {
+    if (phase !== "playing" || !paused) return;
+    setPaused(false);
+    lastHitRef.current = 0;
+    if (audioRef.current.gain && !muted) audioRef.current.gain.gain.value = 0.12;
+    runTimers();
   };
 
   useEffect(() => () => { clearTimers(); stopMusic(); }, []);
@@ -217,6 +237,41 @@ function Game() {
     });
   };
 
+  const playGunshot = () => {
+    if (muted) return;
+    let ctx = audioRef.current.ctx;
+    if (!ctx) {
+      const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
+      if (!Ctx) return;
+      ctx = new Ctx();
+      audioRef.current.ctx = ctx;
+    }
+    const now = ctx.currentTime;
+    // White noise burst
+    const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.25, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.5, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass"; hp.frequency.value = 800;
+    noise.connect(hp); hp.connect(noiseGain); noiseGain.connect(ctx.destination);
+    noise.start(now); noise.stop(now + 0.25);
+    // Low boom thump
+    const osc = ctx.createOscillator();
+    const og = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+    og.gain.setValueAtTime(0.6, now);
+    og.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(og); og.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 0.22);
+  };
+
   const addParticle = (x: number, y: number, kind: "hit" | "miss", text?: string) => {
     const id = idRef.current++;
     setParticles((p) => [...p, { id, x, y, kind, text }]);
@@ -227,7 +282,8 @@ function Game() {
 
   const hitTarget = (e: React.MouseEvent, target: Target) => {
     e.stopPropagation();
-    if (phase !== "playing") return;
+    if (phase !== "playing" || paused) return;
+    playGunshot();
     const rect = arenaRef.current?.getBoundingClientRect();
     const x = rect ? e.clientX - rect.left : 0;
     const y = rect ? e.clientY - rect.top : 0;
@@ -251,10 +307,11 @@ function Game() {
   };
 
   const missClick = (e: React.MouseEvent) => {
-    if (phase !== "playing") return;
+    if (phase !== "playing" || paused) return;
     const rect = arenaRef.current?.getBoundingClientRect();
     const x = rect ? e.clientX - rect.left : 0;
     const y = rect ? e.clientY - rect.top : 0;
+    playGunshot();
     setCombo(0);
     setShots((s) => s + 1);
     setTimeLeft((t) => Math.max(0, t - 1));
@@ -288,14 +345,26 @@ function Game() {
             : "default",
         }}
       >
-        {/* Mute button */}
-        <button
-          onClick={(e) => { e.stopPropagation(); toggleMute(); }}
-          className="absolute top-3 right-3 z-30 bg-amber-950/80 border-2 border-amber-700 rounded-full w-10 h-10 flex items-center justify-center text-amber-100 text-lg hover:bg-amber-900 transition"
-          title={muted ? "Unmute" : "Mute"}
-        >
-          {muted ? "🔇" : "🔊"}
-        </button>
+        {/* Top-right controls */}
+        <div className="absolute top-3 right-3 z-30 flex gap-2">
+          {phase === "playing" && (
+            <button
+              onClick={(e) => { e.stopPropagation(); paused ? resumeGame() : pauseGame(); }}
+              className="bg-amber-950/80 border-2 border-amber-700 rounded-full w-10 h-10 flex items-center justify-center text-amber-100 text-lg hover:bg-amber-900 transition"
+              title={paused ? "Resume" : "Pause"}
+            >
+              {paused ? "▶️" : "⏸️"}
+            </button>
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleMute(); }}
+            className="bg-amber-950/80 border-2 border-amber-700 rounded-full w-10 h-10 flex items-center justify-center text-amber-100 text-lg hover:bg-amber-900 transition"
+            title={muted ? "Unmute" : "Mute"}
+          >
+            {muted ? "🔇" : "🔊"}
+          </button>
+        </div>
+
 
 
         {/* Arena */}
@@ -352,6 +421,23 @@ function Game() {
               ))}
             </>
           )}
+
+          {phase === "playing" && paused && (
+            <Overlay>
+              <Card>
+                <h2 className="text-4xl md:text-5xl text-amber-100 mb-4 tracking-wider drop-shadow-[3px_3px_0_#000]">
+                  PAUSED
+                </h2>
+                <p className="text-amber-200 italic mb-6" style={{ fontFamily: "'Special Elite', serif" }}>
+                  Catch your breath, partner.
+                </p>
+                <button onClick={(e) => { e.stopPropagation(); resumeGame(); }} className="cowboy-btn">
+                  ▶️ RESUME
+                </button>
+              </Card>
+            </Overlay>
+          )}
+
 
           {phase === "start" && (
             <Overlay>
