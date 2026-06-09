@@ -213,9 +213,6 @@ function Game() {
     try { a.currentTime = 0; a.play().catch(() => {}); } catch { /* noop */ }
   };
 
-    osc.start(now); osc.stop(now + 0.22);
-  };
-
   const addParticle = (x: number, y: number, kind: "hit" | "miss", text?: string) => {
     const id = idRef.current++;
     setParticles((p) => [...p, { id, x, y, kind, text }]);
