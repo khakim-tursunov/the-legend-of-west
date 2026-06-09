@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import wildWestBg from "@/assets/wild-west-bg.jpg";
+import westernTheme from "@/assets/western-theme.mp3.asset.json";
+import gunshotSfx from "@/assets/gunshot.mp3.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -69,7 +71,9 @@ function Game() {
   const idRef = useRef(1);
   const arenaRef = useRef<HTMLDivElement>(null);
   const timersRef = useRef<{ tick?: number; spawn?: number; cull?: number }>({});
-  const audioRef = useRef<{ ctx?: AudioContext; gain?: GainNode; stop?: () => void }>({});
+  const musicRef = useRef<HTMLAudioElement | null>(null);
+  const gunshotPoolRef = useRef<HTMLAudioElement[]>([]);
+  const gunshotIdxRef = useRef(0);
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? window.localStorage.getItem("wws_high") : null;
@@ -153,123 +157,60 @@ function Game() {
     if (phase !== "playing" || paused) return;
     setPaused(true);
     clearTimers();
-    if (audioRef.current.gain) audioRef.current.gain.gain.value = 0;
+    musicRef.current?.pause();
   };
 
   const resumeGame = () => {
     if (phase !== "playing" || !paused) return;
     setPaused(false);
     lastHitRef.current = 0;
-    if (audioRef.current.gain && !muted) audioRef.current.gain.gain.value = 0.12;
+    if (!muted) musicRef.current?.play().catch(() => {});
     runTimers();
   };
 
   useEffect(() => () => { clearTimers(); stopMusic(); }, []);
 
   const startMusic = () => {
-    if (audioRef.current.ctx) return;
-    const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
-    if (!Ctx) return;
-    const ctx: AudioContext = new Ctx();
-    const master = ctx.createGain();
-    master.gain.value = muted ? 0 : 0.12;
-    master.connect(ctx.destination);
-
-    // Simple looping western banjo-like melody (pentatonic in A)
-    const notes = [220, 277.18, 329.63, 220, 277.18, 329.63, 440, 329.63, 277.18, 246.94, 220, 246.94, 277.18, 329.63, 277.18, 220];
-    const noteDur = 0.28;
-    let step = 0;
-    let scheduler: number;
-
-    const playNote = (freq: number, time: number) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "triangle";
-      o.frequency.value = freq;
-      g.gain.setValueAtTime(0, time);
-      g.gain.linearRampToValueAtTime(0.6, time + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, time + noteDur);
-      o.connect(g); g.connect(master);
-      o.start(time); o.stop(time + noteDur + 0.05);
-
-      // simple bass on downbeats
-      if (step % 4 === 0) {
-        const b = ctx.createOscillator();
-        const bg = ctx.createGain();
-        b.type = "sine";
-        b.frequency.value = freq / 2;
-        bg.gain.setValueAtTime(0, time);
-        bg.gain.linearRampToValueAtTime(0.4, time + 0.02);
-        bg.gain.exponentialRampToValueAtTime(0.001, time + noteDur * 1.5);
-        b.connect(bg); bg.connect(master);
-        b.start(time); b.stop(time + noteDur * 1.5 + 0.05);
-      }
-    };
-
-    let nextTime = ctx.currentTime + 0.1;
-    const tick = () => {
-      while (nextTime < ctx.currentTime + 0.3) {
-        playNote(notes[step % notes.length], nextTime);
-        nextTime += noteDur;
-        step++;
-      }
-    };
-    tick();
-    scheduler = window.setInterval(tick, 100);
-
-    audioRef.current = {
-      ctx,
-      gain: master,
-      stop: () => { window.clearInterval(scheduler); ctx.close(); },
-    };
+    if (!musicRef.current) {
+      const a = new Audio(westernTheme.url);
+      a.loop = true;
+      a.volume = 0.35;
+      musicRef.current = a;
+    }
+    musicRef.current.muted = muted;
+    musicRef.current.currentTime = 0;
+    musicRef.current.play().catch(() => {});
   };
 
   const stopMusic = () => {
-    audioRef.current.stop?.();
-    audioRef.current = {};
+    if (musicRef.current) {
+      musicRef.current.pause();
+      musicRef.current.currentTime = 0;
+    }
   };
 
   const toggleMute = () => {
     setMuted((m) => {
       const next = !m;
-      if (audioRef.current.gain) audioRef.current.gain.gain.value = next ? 0 : 0.12;
+      if (musicRef.current) musicRef.current.muted = next;
       return next;
     });
   };
 
   const playGunshot = () => {
     if (muted) return;
-    let ctx = audioRef.current.ctx;
-    if (!ctx) {
-      const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
-      if (!Ctx) return;
-      ctx = new Ctx();
-      audioRef.current.ctx = ctx;
+    // Pool of preloaded gunshot audio elements for rapid-fire playback
+    if (gunshotPoolRef.current.length === 0) {
+      for (let i = 0; i < 4; i++) {
+        const a = new Audio(gunshotSfx.url);
+        a.volume = 0.7;
+        gunshotPoolRef.current.push(a);
+      }
     }
-    const now = ctx.currentTime;
-    // White noise burst
-    const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.25, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.5, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-    const hp = ctx.createBiquadFilter();
-    hp.type = "highpass"; hp.frequency.value = 800;
-    noise.connect(hp); hp.connect(noiseGain); noiseGain.connect(ctx.destination);
-    noise.start(now); noise.stop(now + 0.25);
-    // Low boom thump
-    const osc = ctx.createOscillator();
-    const og = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(180, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
-    og.gain.setValueAtTime(0.6, now);
-    og.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-    osc.connect(og); og.connect(ctx.destination);
-    osc.start(now); osc.stop(now + 0.22);
+    const pool = gunshotPoolRef.current;
+    const a = pool[gunshotIdxRef.current % pool.length];
+    gunshotIdxRef.current++;
+    try { a.currentTime = 0; a.play().catch(() => {}); } catch { /* noop */ }
   };
 
   const addParticle = (x: number, y: number, kind: "hit" | "miss", text?: string) => {
