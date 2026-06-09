@@ -143,7 +143,78 @@ function Game() {
     }, 100);
   };
 
-  useEffect(() => () => clearTimers(), []);
+  useEffect(() => () => { clearTimers(); stopMusic(); }, []);
+
+  const startMusic = () => {
+    if (audioRef.current.ctx) return;
+    const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
+    if (!Ctx) return;
+    const ctx: AudioContext = new Ctx();
+    const master = ctx.createGain();
+    master.gain.value = muted ? 0 : 0.12;
+    master.connect(ctx.destination);
+
+    // Simple looping western banjo-like melody (pentatonic in A)
+    const notes = [220, 277.18, 329.63, 220, 277.18, 329.63, 440, 329.63, 277.18, 246.94, 220, 246.94, 277.18, 329.63, 277.18, 220];
+    const noteDur = 0.28;
+    let step = 0;
+    let scheduler: number;
+
+    const playNote = (freq: number, time: number) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "triangle";
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, time);
+      g.gain.linearRampToValueAtTime(0.6, time + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, time + noteDur);
+      o.connect(g); g.connect(master);
+      o.start(time); o.stop(time + noteDur + 0.05);
+
+      // simple bass on downbeats
+      if (step % 4 === 0) {
+        const b = ctx.createOscillator();
+        const bg = ctx.createGain();
+        b.type = "sine";
+        b.frequency.value = freq / 2;
+        bg.gain.setValueAtTime(0, time);
+        bg.gain.linearRampToValueAtTime(0.4, time + 0.02);
+        bg.gain.exponentialRampToValueAtTime(0.001, time + noteDur * 1.5);
+        b.connect(bg); bg.connect(master);
+        b.start(time); b.stop(time + noteDur * 1.5 + 0.05);
+      }
+    };
+
+    let nextTime = ctx.currentTime + 0.1;
+    const tick = () => {
+      while (nextTime < ctx.currentTime + 0.3) {
+        playNote(notes[step % notes.length], nextTime);
+        nextTime += noteDur;
+        step++;
+      }
+    };
+    tick();
+    scheduler = window.setInterval(tick, 100);
+
+    audioRef.current = {
+      ctx,
+      gain: master,
+      stop: () => { window.clearInterval(scheduler); ctx.close(); },
+    };
+  };
+
+  const stopMusic = () => {
+    audioRef.current.stop?.();
+    audioRef.current = {};
+  };
+
+  const toggleMute = () => {
+    setMuted((m) => {
+      const next = !m;
+      if (audioRef.current.gain) audioRef.current.gain.gain.value = next ? 0 : 0.12;
+      return next;
+    });
+  };
 
   const addParticle = (x: number, y: number, kind: "hit" | "miss", text?: string) => {
     const id = idRef.current++;
