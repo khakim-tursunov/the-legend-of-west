@@ -267,7 +267,7 @@ function Game() {
       className="min-h-screen w-full flex items-center justify-center p-4"
       style={{
         background:
-          "radial-gradient(ellipse at top, #f5a23a 0%, #c66a1a 35%, #6b2e0f 75%, #2b1407 100%)",
+          "radial-gradient(ellipse at top, #bae6fd 0%, #fde68a 45%, #fdba74 80%, #f59e42 100%)",
         fontFamily: "'Rye', 'Georgia', serif",
       }}
     >
