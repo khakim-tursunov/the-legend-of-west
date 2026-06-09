@@ -282,7 +282,8 @@ function Game() {
 
   const hitTarget = (e: React.MouseEvent, target: Target) => {
     e.stopPropagation();
-    if (phase !== "playing") return;
+    if (phase !== "playing" || paused) return;
+    playGunshot();
     const rect = arenaRef.current?.getBoundingClientRect();
     const x = rect ? e.clientX - rect.left : 0;
     const y = rect ? e.clientY - rect.top : 0;
