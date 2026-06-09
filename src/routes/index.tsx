@@ -422,6 +422,23 @@ function Game() {
             </>
           )}
 
+          {phase === "playing" && paused && (
+            <Overlay>
+              <Card>
+                <h2 className="text-4xl md:text-5xl text-amber-100 mb-4 tracking-wider drop-shadow-[3px_3px_0_#000]">
+                  PAUSED
+                </h2>
+                <p className="text-amber-200 italic mb-6" style={{ fontFamily: "'Special Elite', serif" }}>
+                  Catch your breath, partner.
+                </p>
+                <button onClick={(e) => { e.stopPropagation(); resumeGame(); }} className="cowboy-btn">
+                  ▶️ RESUME
+                </button>
+              </Card>
+            </Overlay>
+          )}
+
+
           {phase === "start" && (
             <Overlay>
               <Card>
