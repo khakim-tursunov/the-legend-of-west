@@ -280,23 +280,23 @@ function Game() {
         style={{
           transform: shake && Date.now() - shake < 120 ? `translate(${(Math.random()-0.5)*6}px, ${(Math.random()-0.5)*6}px)` : undefined,
           transition: "transform 60ms",
-          background:
-            "linear-gradient(180deg, #f6c46a 0%, #e08a3a 40%, #8a4517 75%, #4a2008 100%)",
+          backgroundImage: `url(${wildWestBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
           cursor: phase === "playing"
             ? `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><circle cx='20' cy='20' r='15' fill='none' stroke='%23b91c1c' stroke-width='2.5'/><circle cx='20' cy='20' r='2.5' fill='%23b91c1c'/><line x1='20' y1='2' x2='20' y2='12' stroke='%23b91c1c' stroke-width='2.5'/><line x1='20' y1='28' x2='20' y2='38' stroke='%23b91c1c' stroke-width='2.5'/><line x1='2' y1='20' x2='12' y2='20' stroke='%23b91c1c' stroke-width='2.5'/><line x1='28' y1='20' x2='38' y2='20' stroke='%23b91c1c' stroke-width='2.5'/></svg>") 20 20, crosshair`
             : "default",
         }}
       >
-        {/* Sun */}
-        <div className="absolute top-6 right-10 w-32 h-32 rounded-full opacity-80"
-          style={{ background: "radial-gradient(circle, #ffe9a8 0%, #ffb347 60%, transparent 70%)" }} />
-        {/* Mountains silhouette */}
-        <svg className="absolute bottom-0 left-0 w-full h-1/3" viewBox="0 0 100 30" preserveAspectRatio="none">
-          <polygon points="0,30 15,10 25,18 40,5 55,20 70,8 85,18 100,12 100,30" fill="#3b1c08" opacity="0.85"/>
-        </svg>
-        {/* Ground planks */}
-        <div className="absolute bottom-0 left-0 right-0 h-10"
-          style={{ background: "repeating-linear-gradient(90deg, #5a2c10 0 40px, #4a2308 40px 42px)" }} />
+        {/* Mute button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleMute(); }}
+          className="absolute top-3 right-3 z-30 bg-amber-950/80 border-2 border-amber-700 rounded-full w-10 h-10 flex items-center justify-center text-amber-100 text-lg hover:bg-amber-900 transition"
+          title={muted ? "Unmute" : "Mute"}
+        >
+          {muted ? "🔇" : "🔊"}
+        </button>
+
 
         {/* Arena */}
         <div
