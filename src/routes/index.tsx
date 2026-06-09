@@ -237,6 +237,41 @@ function Game() {
     });
   };
 
+  const playGunshot = () => {
+    if (muted) return;
+    let ctx = audioRef.current.ctx;
+    if (!ctx) {
+      const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
+      if (!Ctx) return;
+      ctx = new Ctx();
+      audioRef.current.ctx = ctx;
+    }
+    const now = ctx.currentTime;
+    // White noise burst
+    const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.25, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.5, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass"; hp.frequency.value = 800;
+    noise.connect(hp); hp.connect(noiseGain); noiseGain.connect(ctx.destination);
+    noise.start(now); noise.stop(now + 0.25);
+    // Low boom thump
+    const osc = ctx.createOscillator();
+    const og = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+    og.gain.setValueAtTime(0.6, now);
+    og.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(og); og.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 0.22);
+  };
+
   const addParticle = (x: number, y: number, kind: "hit" | "miss", text?: string) => {
     const id = idRef.current++;
     setParticles((p) => [...p, { id, x, y, kind, text }]);
