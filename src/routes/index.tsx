@@ -307,10 +307,11 @@ function Game() {
   };
 
   const missClick = (e: React.MouseEvent) => {
-    if (phase !== "playing") return;
+    if (phase !== "playing" || paused) return;
     const rect = arenaRef.current?.getBoundingClientRect();
     const x = rect ? e.clientX - rect.left : 0;
     const y = rect ? e.clientY - rect.top : 0;
+    playGunshot();
     setCombo(0);
     setShots((s) => s + 1);
     setTimeLeft((t) => Math.max(0, t - 1));
