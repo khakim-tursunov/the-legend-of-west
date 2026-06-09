@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import wildWestBg from "@/assets/wild-west-bg.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
