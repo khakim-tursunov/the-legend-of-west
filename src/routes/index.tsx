@@ -98,19 +98,7 @@ function Game() {
     });
   }, []);
 
-  const startGame = () => {
-    clearTimers();
-    setScore(0);
-    setTimeLeft(GAME_DURATION);
-    setTargets([]);
-    setParticles([]);
-    setCombo(0);
-    setHits(0);
-    setShots(0);
-    setPhase("playing");
-    lastHitRef.current = 0;
-    startMusic();
-
+  const runTimers = () => {
     timersRef.current.tick = window.setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
@@ -143,6 +131,37 @@ function Game() {
       const now = Date.now();
       setTargets((cur) => cur.filter((t) => now - t.born < t.ttl));
     }, 100);
+  };
+
+  const startGame = () => {
+    clearTimers();
+    setScore(0);
+    setTimeLeft(GAME_DURATION);
+    setTargets([]);
+    setParticles([]);
+    setCombo(0);
+    setHits(0);
+    setShots(0);
+    setPaused(false);
+    setPhase("playing");
+    lastHitRef.current = 0;
+    startMusic();
+    runTimers();
+  };
+
+  const pauseGame = () => {
+    if (phase !== "playing" || paused) return;
+    setPaused(true);
+    clearTimers();
+    if (audioRef.current.gain) audioRef.current.gain.gain.value = 0;
+  };
+
+  const resumeGame = () => {
+    if (phase !== "playing" || !paused) return;
+    setPaused(false);
+    lastHitRef.current = 0;
+    if (audioRef.current.gain && !muted) audioRef.current.gain.gain.value = 0.12;
+    runTimers();
   };
 
   useEffect(() => () => { clearTimers(); stopMusic(); }, []);
