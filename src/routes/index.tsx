@@ -108,6 +108,7 @@ function Game() {
     setShots(0);
     setPhase("playing");
     lastHitRef.current = 0;
+    startMusic();
 
     timersRef.current.tick = window.setInterval(() => {
       setTimeLeft((t) => {
