@@ -62,11 +62,13 @@ function Game() {
   const [hits, setHits] = useState(0);
   const [shots, setShots] = useState(0);
   const [shake, setShake] = useState(0);
+  const [muted, setMuted] = useState(false);
 
   const lastHitRef = useRef(0);
   const idRef = useRef(1);
   const arenaRef = useRef<HTMLDivElement>(null);
   const timersRef = useRef<{ tick?: number; spawn?: number; cull?: number }>({});
+  const audioRef = useRef<{ ctx?: AudioContext; gain?: GainNode; stop?: () => void }>({});
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? window.localStorage.getItem("wws_high") : null;
