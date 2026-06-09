@@ -345,14 +345,26 @@ function Game() {
             : "default",
         }}
       >
-        {/* Mute button */}
-        <button
-          onClick={(e) => { e.stopPropagation(); toggleMute(); }}
-          className="absolute top-3 right-3 z-30 bg-amber-950/80 border-2 border-amber-700 rounded-full w-10 h-10 flex items-center justify-center text-amber-100 text-lg hover:bg-amber-900 transition"
-          title={muted ? "Unmute" : "Mute"}
-        >
-          {muted ? "🔇" : "🔊"}
-        </button>
+        {/* Top-right controls */}
+        <div className="absolute top-3 right-3 z-30 flex gap-2">
+          {phase === "playing" && (
+            <button
+              onClick={(e) => { e.stopPropagation(); paused ? resumeGame() : pauseGame(); }}
+              className="bg-amber-950/80 border-2 border-amber-700 rounded-full w-10 h-10 flex items-center justify-center text-amber-100 text-lg hover:bg-amber-900 transition"
+              title={paused ? "Resume" : "Pause"}
+            >
+              {paused ? "▶️" : "⏸️"}
+            </button>
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleMute(); }}
+            className="bg-amber-950/80 border-2 border-amber-700 rounded-full w-10 h-10 flex items-center justify-center text-amber-100 text-lg hover:bg-amber-900 transition"
+            title={muted ? "Unmute" : "Mute"}
+          >
+            {muted ? "🔇" : "🔊"}
+          </button>
+        </div>
+
 
 
         {/* Arena */}
