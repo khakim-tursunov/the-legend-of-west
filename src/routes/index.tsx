@@ -183,6 +183,27 @@ function Game() {
     musicRef.current.play().catch(() => {});
   };
 
+  const primeAudio = () => {
+    // iOS/Android require audio to be triggered inside a user gesture.
+    // Prime the gunshot pool so later programmatic plays succeed.
+    if (gunshotPoolRef.current.length === 0) {
+      for (let i = 0; i < 4; i++) {
+        const a = new Audio(gunshotSfx.url);
+        a.volume = 0.7;
+        a.preload = "auto";
+        gunshotPoolRef.current.push(a);
+      }
+    }
+    gunshotPoolRef.current.forEach((a) => {
+      try {
+        a.muted = true;
+        const p = a.play();
+        if (p) p.then(() => { a.pause(); a.currentTime = 0; a.muted = false; }).catch(() => { a.muted = false; });
+        else { a.pause(); a.currentTime = 0; a.muted = false; }
+      } catch { /* noop */ }
+    });
+  };
+
   const stopMusic = () => {
     if (musicRef.current) {
       musicRef.current.pause();
