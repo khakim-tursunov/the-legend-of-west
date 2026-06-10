@@ -149,6 +149,7 @@ function Game() {
     setPaused(false);
     setPhase("playing");
     lastHitRef.current = 0;
+    primeAudio();
     startMusic();
     runTimers();
   };
