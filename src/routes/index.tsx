@@ -299,7 +299,7 @@ function Game() {
       <link href="https://fonts.googleapis.com/css2?family=Rye&family=Special+Elite&display=swap" rel="stylesheet" />
 
       <div
-        className="relative w-full max-w-5xl h-[calc(100dvh-1rem)] sm:h-auto sm:aspect-[16/10] rounded-2xl sm:rounded-3xl overflow-hidden border-4 sm:border-[6px] border-amber-950 shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
+        className="relative w-full max-w-5xl h-[70dvh] sm:h-auto sm:aspect-[16/10] rounded-2xl sm:rounded-3xl overflow-hidden border-4 sm:border-[6px] border-amber-950 shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
         style={{
           transform: shake && Date.now() - shake < 120 ? `translate(${(Math.random()-0.5)*6}px, ${(Math.random()-0.5)*6}px)` : undefined,
           transition: "transform 60ms",
