@@ -541,11 +541,11 @@ function TargetView({ target, onClick }: { target: Target; onClick: (e: React.Mo
         cursor: "inherit",
       }}
     >
-      <div className="relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
-        <div className="absolute inset-0 rounded-full border-[5px] border-amber-100 bg-red-700 shadow-[0_6px_0_#5b1a1a,0_10px_20px_rgba(0,0,0,0.5)]" />
-        <div className="absolute inset-2 rounded-full border-[4px] border-red-700 bg-amber-100" />
-        <div className="absolute inset-5 rounded-full bg-red-700" />
-        <span className="relative text-3xl md:text-4xl drop-shadow-[1px_1px_0_#000]">{meta.emoji}</span>
+      <div className="relative flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24">
+        <div className="absolute inset-0 rounded-full border-[4px] sm:border-[5px] border-amber-100 bg-red-700 shadow-[0_6px_0_#5b1a1a,0_10px_20px_rgba(0,0,0,0.5)]" />
+        <div className="absolute inset-1.5 sm:inset-2 rounded-full border-[3px] sm:border-[4px] border-red-700 bg-amber-100" />
+        <div className="absolute inset-3.5 sm:inset-5 rounded-full bg-red-700" />
+        <span className="relative text-2xl sm:text-3xl md:text-4xl drop-shadow-[1px_1px_0_#000]">{meta.emoji}</span>
         {/* TTL ring */}
         <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="46" fill="none" stroke="#fbbf24" strokeWidth="4"
