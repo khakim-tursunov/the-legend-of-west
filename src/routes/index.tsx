@@ -264,23 +264,29 @@ function Game() {
 
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center p-4"
+      className="min-h-[100dvh] w-full flex items-center justify-center p-2 sm:p-4"
       style={{
         background:
           "radial-gradient(ellipse at top, #bae6fd 0%, #fde68a 45%, #fdba74 80%, #f59e42 100%)",
         fontFamily: "'Rye', 'Georgia', serif",
+        touchAction: "manipulation",
+        WebkitUserSelect: "none",
+        userSelect: "none",
       }}
     >
       <link href="https://fonts.googleapis.com/css2?family=Rye&family=Special+Elite&display=swap" rel="stylesheet" />
 
       <div
-        className="relative w-full max-w-5xl aspect-[16/10] rounded-3xl overflow-hidden border-[6px] border-amber-950 shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
+        className="relative w-full max-w-5xl rounded-2xl sm:rounded-3xl overflow-hidden border-4 sm:border-[6px] border-amber-950 shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
         style={{
+          aspectRatio: "16 / 10",
+          maxHeight: "calc(100dvh - 1rem)",
           transform: shake && Date.now() - shake < 120 ? `translate(${(Math.random()-0.5)*6}px, ${(Math.random()-0.5)*6}px)` : undefined,
           transition: "transform 60ms",
           backgroundImage: `url(${wildWestBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
+          touchAction: "manipulation",
           cursor: phase === "playing"
             ? `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><circle cx='20' cy='20' r='15' fill='none' stroke='%23b91c1c' stroke-width='2.5'/><circle cx='20' cy='20' r='2.5' fill='%23b91c1c'/><line x1='20' y1='2' x2='20' y2='12' stroke='%23b91c1c' stroke-width='2.5'/><line x1='20' y1='28' x2='20' y2='38' stroke='%23b91c1c' stroke-width='2.5'/><line x1='2' y1='20' x2='12' y2='20' stroke='%23b91c1c' stroke-width='2.5'/><line x1='28' y1='20' x2='38' y2='20' stroke='%23b91c1c' stroke-width='2.5'/></svg>") 20 20, crosshair`
             : "default",
